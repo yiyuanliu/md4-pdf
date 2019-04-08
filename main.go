@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/jpeg"
 	"io/ioutil"
+	"os"
 )
 
 var (
@@ -13,24 +14,35 @@ var (
 )
 
 func main() {
-	str1, _ := hex.DecodeString("17250c98fffe01519e19e0c11121deb73c7ab759c3ab19ae1256f3f69a8aaf141ccf8ef1e5698ffbd939c869a1ebf4993c3c4dab29e64f1bd7c27b5c9de9b8bc")
-	str2, _ := hex.DecodeString("17250c98fffe01d19e19e0311121deb73c7ab759c3ab19ae1256f3f69a8aaf141ccf8ef1e5698ffbd939c869a1ebf4993c3c4cab29e64f1bd7c27b5c9de9b8bc")
+	args := os.Args[1:]
+	if len(args) != 2 {
+		panic("go run main.go <pic1> <pic2>")
+	}
 
-	jpeg1, _ := ioutil.ReadFile("./1.jpeg")
-	jpeg2, _ := ioutil.ReadFile("./2.jpeg")
+	str1, err1 := hex.DecodeString("17250c98fffe01519e19e0c11121deb73c7ab759c3ab19ae1256f3f69a8aaf141ccf8ef1e5698ffbd939c869a1ebf4993c3c4dab29e64f1bd7c27b5c9de9b8bc")
+	str2, err2 := hex.DecodeString("17250c98fffe01d19e19e0311121deb73c7ab759c3ab19ae1256f3f69a8aaf141ccf8ef1e5698ffbd939c869a1ebf4993c3c4cab29e64f1bd7c27b5c9de9b8bc")
+	if err1 != nil {
+		panic(err1)
+	}
+	if err2 != nil {
+		panic(err2)
+	}
+
+	jpeg1, _ := ioutil.ReadFile(args[0])
+	jpeg2, _ := ioutil.ReadFile(args[1])
 
 	out1, out2 := genPic(len(pdfHeader), jpeg1, jpeg2, str1, str2)
-	ioutil.WriteFile("out1.jpeg", out1, 0644)
-	ioutil.WriteFile("out2.jpeg", out2, 0644)
+	// ioutil.WriteFile("out1.jpeg", out1, 0644)
+	// ioutil.WriteFile("out2.jpeg", out2, 0644)
 
 	pdf1, pdf2 := genPdf(out1, out2)
-	ioutil.WriteFile("pdf1.pdf", pdf1, 0644)
-	ioutil.WriteFile("pdf2.pdf", pdf2, 0644)
+	ioutil.WriteFile("out1.pdf", pdf1, 0644)
+	ioutil.WriteFile("out2.pdf", pdf2, 0644)
 }
 
 func genPic(prefixLen int, jpeg1, jpeg2 []byte, str1, str2 []byte) (a, b []byte) {
 	if len(jpeg1) > 65533 || len(jpeg2) > 65533 {
-		fmt.Println("jpeg is too big")
+		panic("pic is too big")
 	}
 
 	if len(str1) != len(str2) || len(str1) != 64 {
@@ -108,7 +120,7 @@ func genPdf(pic1, pic2 []byte) ([]byte, []byte) {
 	data = append(data, []byte(fmt.Sprintf("2 0 obj\n%010d\nendobj\n\n", width))...)
 	xref = append(xref, []byte(fmt.Sprintf("%010d 00000 n \n", len(pdfHeader)+len(pic1)+len(data)))...)
 	//height
-	data = append(data, []byte(fmt.Sprintf("3 0 obj\n%010d\nendobj\n\n", width))...)
+	data = append(data, []byte(fmt.Sprintf("3 0 obj\n%010d\nendobj\n\n", height))...)
 	xref = append(xref, []byte(fmt.Sprintf("%010d 00000 n \n", len(pdfHeader)+len(pic1)+len(data)))...)
 
 	data = append(data, []byte("4 0 obj\n/XObject\nendobj\n\n")...)
