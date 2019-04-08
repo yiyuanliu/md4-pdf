@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
+	"image/jpeg"
 	"io/ioutil"
 )
 
@@ -84,7 +86,9 @@ func genPic(prefixLen int, jpeg1, jpeg2 []byte, str1, str2 []byte) (a, b []byte)
 }
 
 func getPicSize(pic []byte) (height, width int) {
-	return 1920, 1080
+	r := bytes.NewReader(pic)
+	rect, _ := jpeg.DecodeConfig(r)
+	return rect.Height, rect.Width
 }
 
 func genPdf(pic1, pic2 []byte) ([]byte, []byte) {
